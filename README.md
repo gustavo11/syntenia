@@ -25,7 +25,7 @@ gff2graph_ort_projections_no_contraction.pl <orts file> <list chrom/scaffolds> \
 * **\<svg out\>** - Name of the output
 
 
-#### FORMAT of chrom/scaffold list
+##### FORMAT of chrom/scaffold list
 ```
 <org name on Ort cluster file> <scaffold/chrom>(start:end)orientation ...
 ```
