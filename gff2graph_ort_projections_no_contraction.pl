@@ -1,7 +1,7 @@
 #!/bin/env perl
 
 use FindBin;               
-use lib "$FindBin::Bin/.."
+use lib "$FindBin::Bin/..";
 
 use strict;
 use GD::SVG;
