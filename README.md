@@ -27,7 +27,8 @@ gff2graph_ort_projections_no_contraction.pl <orts file> <list chrom/scaffolds> \
 * **\<list gff files\>** - List of paths to GFF file containing the annotation
 * **\<list fasta files\>** - List of paths to FASTA file containing the whole genomic sequence
 * **\<svg out\>** - Name of the output
-
+<BR>
+<BR>
 
 ##### FORMAT of chrom/scaffold list
 ```
