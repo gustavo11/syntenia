@@ -9,7 +9,7 @@ use Bio::SeqIO;
 use Bio::SeqFeature::Generic;
 use Getopt::Std;
 use GFFLib::GFFFile;
-use orthologia::Ort;
+use Orthologia::Ort;
 
 my $DEFAULT_WIDTH  = 1000;
 my $DEFAULT_HEIGHT = 600;
