@@ -1,6 +1,13 @@
 #!/bin/env perl
 
 use strict;
+
+use FindBin;
+use lib $FindBin::Bin;
+use lib $FindBin::Bin . "/../GFFLib";
+use lib $FindBin::Bin . "/../Orthologia";
+
+
 use GD::SVG;
 use Bio::SeqIO;
 use Bio::SeqFeature::Generic;
@@ -79,11 +86,13 @@ my @fasta_seqnames;
 
 # "(start:end)orientation" are optional. No need them if the whole chrom/scaffold will be rendered or if it will be rendered
 # in its current orientation
+# A start or end equals to -1 indicates to the program to render the chrom/scaffold untils its beginning (start=-1)
+# or untils its end (end=-1)  
 
-# Loa_loa_V2 7000000145608817(1:200)- 7000000145609071 7000000145608793
+# Loa_loa_V2 7000000145608817(1:200)- 7000000145609071(-1:400) 7000000145608793
 # C_elegans_WS224 7000000183869869-
 
-# * The dash indicates sequences that should be render as reverse complement
+# * A dash (minus) suffix indicates sequences that should be render as reverse complement
 
 # Open list of chrom
 my @chroms;
@@ -95,12 +104,13 @@ my $cont_species = 0;
 # Only the first instance of a contig will be rendered
 my @chrom_registered;
 
+print STDERR "Reading list of chrom/scaffolds...\n";
 open LIST_CHROM, "$list_chrom" or die "Unable to open $list_chrom\n";
 while (<LIST_CHROM>) {
 	my $line = $_;
 	chomp($line);
 
-	my @temp_chroms = split " ", $line;
+	my @temp_chroms = split /\s/, $line;
 
 	# Add species name to @species vector
 	push( @species, shift @temp_chroms );
@@ -127,9 +137,15 @@ while (<LIST_CHROM>) {
 			$start = -1;
 			$end   = -1;
 		}
+		
+		my $start_str = $start;
+		my $end_str = $end;
+		
+		$start_str = 'undefined' if $start_str == -1;
+		$end_str = 'undefined' if $end_str == -1; 
 
-		print STDERR
-"Curr chrom: $curr_chrom Orient: $orientation start: $start end: $end\n";
+			print STDERR
+"\tChrom.: $curr_chrom  Orient.: $orientation  start: $start_str  end: $end_str\n";
 
 		#getc();
 
@@ -211,8 +227,15 @@ while (<LIST_FASTA>) {
 		map { $found = 1 if $inSeqID eq $_->{chrom} }
 		  @{ $chroms[$cont_species] };
 		next if $found == 0;
+		
 
 		my $curr_chrom = $inSeqID;
+		
+		print STDERR "\tParsing chrom/scaffold $curr_chrom\n";
+
+		# Mark that this scaffold was found
+		$chroms[$cont_species]
+			  [ $chrom_registered[$cont_species]{$curr_chrom} ]->{found} =  1;
 
 		if ( !defined( $inSeq->seq() ) || length( $inSeq->seq() ) == 0 ) {
 			print STDERR $inSeq->id()
@@ -261,6 +284,15 @@ while (<LIST_FASTA>) {
 			$sum_chrom_length += $drawing_length + $CHROM_WIDTH_SPACER_IN_BP;
 		}
 	}
+	
+	# Checking if all scaffolds/chroms were found
+	my $error_message = '';
+	foreach my $checking_chrom ( keys %{$chrom_registered[$cont_species]} ){ 
+		$error_message .= "Error: Unable to find chrom/scaffold $checking_chrom on file $fasta_file\n"
+		  if ( not defined( $chroms[$cont_species]
+				  [ $chrom_registered[$cont_species]{$checking_chrom} ]->{found} ) );
+	}	
+	die $error_message if ( $error_message ne '' ); 
 
 	$sum_chrom_length -= $CHROM_WIDTH_SPACER_IN_BP;
 	$sum_chrom_length_arr[ $cont_species ] = $sum_chrom_length;
@@ -474,6 +506,12 @@ for ( my $cont_species = 0 ; $cont_species < scalar(@chroms) ; $cont_species++ )
 "Coords. LEFT: $rectangle[0]  RIGHT: $rectangle[2]  TOP: $rectangle[1] BOTTOM: $rectangle[3] \n\n" if $debug;
 
 		$im->filledPolygon( $poly, $genes_color );
+		
+		#if( $name =~ "KPC" ){
+			$im->stringUp(gdSmallFont, $rectangle[0] + $TEXT_H_POS_RELATIVE_GENE,
+						$height_offset + $TEXT_V_POS_RELATIVE_GENE , $id ,$black);
+		#}
+		
 
 #		if( $name =~ "KPC" ){
 #			$im->string(gdSmallFont, $rectangle[0] + $TEXT_H_POS_RELATIVE_GENE,
