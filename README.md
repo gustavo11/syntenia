@@ -41,7 +41,7 @@ See a description of each format below.
 <BR>
 <BR>
 
-##### FORMATSA
+##### FORMATS
 
 * **RBH format:**
 
