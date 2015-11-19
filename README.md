@@ -26,7 +26,7 @@ gff2graph_ort_projections_no_contractions.pl [--RBH | --RBH_CALHOUN | --OMCL ] -
 * **--RBH,--RBH_Calhoun,--OMCL** - those flags indicate the format of the orthologous clusters file that will be used when rendering projections. 
 See a description of each format below.
 
-* **--orts** - orthologous clusters file that will be used when rendering projections. See format with below.
+* **--orts** - orthologous clusters file that will be used when rendering projections. See format below.
 
 * **--chrom_list** - list of chromosomes or scaffolds to be rendered. See format below.
 
