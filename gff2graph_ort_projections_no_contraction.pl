@@ -573,8 +573,13 @@ for (
 		my $org_name = $species[$dest_genome];
 		my @ort_genes = $orts->get_orts( $gene_name, $org_name );
 
+		if( $ort_genes[0] eq '' ){
+			print STDERR "Warning: Not able to find orthologs of \'$gene_name\' on organism \'$org_name\'\n";
+			next;
+		}
+
 		if( $debug_projections == 1 ){
-			print STDERR "Number of member from >>>$org_name<<< in the ort cluster:"
+			print STDERR "Number of genes members in the ort cluster of organisms >>>$org_name<<<:"
 		  	. scalar(@ort_genes) . "\n";
 		  	$orts->print_cluster( $gene_name );
 		  	getc();		  	
