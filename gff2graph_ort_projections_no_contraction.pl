@@ -39,7 +39,7 @@ my $CHROM_WIDTH_SPACER_IN_BP = 48000;
 # A. darlingi
 # my $CHROM_WIDTH_SPACER_IN_BP = 12000;
 
-my $debug_projections = 0;
+my $debug_projections = 1;
 my $debug = 0;
 
 STDOUT->autoflush(1);
@@ -320,7 +320,7 @@ for ( my $cont_species = 0 ; $cont_species < scalar(@chroms) ; $cont_species++ )
 
 #################
 # Reading Orts
-my $orts = Ort::new( $orts_file, "gene" );
+my $orts = Ort::new( $orts_file, "gene", "RBH" );
 $orts->read();
 
 # create a new image
