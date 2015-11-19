@@ -23,12 +23,12 @@ usage:
 gff2graph_ort_projections_no_contractions.pl [--RBH | --RBH_CALHOUN | --OMCL ] --orts <file> --chrom_list <file> --gff_list <file> --fasta_list --out <file> [--help]
 
 ```
-* **--RBH,--RBH_Calhoun,--OMCL ** - those flags indicates the format of the orthologous clusters file that will be used when rendering projections. 
-See  a description of each format with --help.
+* **--RBH,--RBH_Calhoun,--OMCL** - those flags indicate the format of the orthologous clusters file that will be used when rendering projections. 
+See a description of each format below.
 
-* **--orts** - orthologous clusters file that will be used when rendering projections. See format with --help.
+* **--orts** - orthologous clusters file that will be used when rendering projections. See format with below.
 
-* **--chrom_list** - list of chromosomes or scaffolds to be rendered. See format with --help.
+* **--chrom_list** - list of chromosomes or scaffolds to be rendered. See format below.
 
 * **--fasta_list** - file listing the path of GFF files (annotation) associated with each genome that will be rendered 
 
@@ -36,7 +36,7 @@ See  a description of each format with --help.
 
 * **--out** - output file in SVG format.
 
-* **--help** - print this message B<(Optional)>
+* **--help** - print this message **(Optional)**
 
 <BR>
 <BR>
