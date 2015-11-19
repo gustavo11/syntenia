@@ -5,7 +5,7 @@ Suite of scripts to generate figures depicting synteny and orthology between set
 
 
 ### Setup
-You would need to download three repositories to use **syntenia**
+You will need to download three repositories to use **syntenia**
 
 ```
 $ github clone https://github.com/gustavo11/syntenia
@@ -20,28 +20,67 @@ $ github clone https://github.com/gustavo11/Orthologia
 ### **gff2graph_ort_projections_no_contraction.pl**
 ```
 usage:
-gff2graph_ort_projections_no_contraction.pl <orts file> <list chrom/scaffolds> \
-<list gff files> <list fasta files> <svg out>
-```
+gff2graph_ort_projections_no_contractions.pl [--RBH | --RBH_CALHOUN | --OMCL ] --orts <file> --chrom_list <file> --gff_list <file> --fasta_list --out <file> [--help]
 
-* **\<orts file\>** -  Output of OrthoMCL
-* **\<list chrom/scaffolds\>** - List of genomes of scaffolds that will depicted in the figure. See format below
-* **\<list gff files\>** - List of paths to GFF file containing the annotation
-* **\<list fasta files\>** - List of paths to FASTA file containing the whole genomic sequence
-* **\<svg out\>** - Name of the output
+```
+* **--RBH,--RBH_Calhoun,--OMCL ** - those flags indicates the format of the orthologous clusters file that will be used when rendering projections. 
+See  a description of each format with --help.
+
+* **--orts** - orthologous clusters file that will be used when rendering projections. See format with --help.
+
+* **--chrom_list** - list of chromosomes or scaffolds to be rendered. See format with --help.
+
+* **--fasta_list** - file listing the path of GFF files (annotation) associated with each genome that will be rendered 
+
+* **--gff_list** - file listing the path of FASTA files (sequence) associated with each genome that will be rendered 
+
+* **--out** - output file in SVG format.
+
+* **--help** - print this message B<(Optional)>
+
 <BR>
 <BR>
 
-##### FORMAT of chrom/scaffold list
-```
-<org name on Ort cluster file> <scaffold/chrom>(start:end)orientation ...
-```
-(start:end)orientation" are optional. No need of them if the whole chrom/scaffold will be rendered or if it will be rendered in its current orientation
+##### FORMATS
 
-**Example:**
+* **RBH format:**
+
 ```
-Loa_loa_V2 7000000145608817(1:200)- 7000000145609071 7000000145608793
-C_elegans_WS224 7000000183869869-
+ 828547707	prodigal	org1	transcript1	gene1	None	GAPDH
+ 828547707	prodigal	org2	transcript2	gene2	None	GAPDH
 ```
+
+* **RBH_Calhoun format:**
+
+```  
+ 828547707	org1	prodigal	transcript1	gene1	None	GAPDH
+ 828547707	org2	prodical	transcript2	gene2	None	GAPDH
+```
+
+* **OMCL format:**  
+
+```
+ ORTHOMCL0(3 genes,2 taxa): G001|gene1(G001) G001|gene2(G001) G002|gene3(G001)
+ ORTHOMCL1(2 genes,1 taxa): G001|gene4(G001) G001|gene5(G001)
+```
+
+* **chrom_list file format:**
+
+```
+ <org name on ort. cluster file>\t<scaffold  or chromosome id>(<start>:<end>)<orientation>\t<scaffold  or chromosome id>(<start>:<end>)<orientation>
+```
+
+ "(start:end)orientation" are optional. There is no need of them if the whole chrom/scaffold needs to be rendered and if it will be rendered 
+ in its current orientation. A start or end equals to -1 indicates to the program to render the chrom/scaffold from its first coordinates (start=-1)
+ till its last coordinate (end=-1). A dash (minus sign) indicates sequences that should be render in the oposite orientation that they are 
+ reported in the GFF and FASTA fiels  
+
+**Ex.:**
+```
+ org1 chrom1(1:200)- chrom2(-1:400) chrom3
+ org2 chrom1-
+```
+
+
 
 

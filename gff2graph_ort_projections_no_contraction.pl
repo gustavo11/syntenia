@@ -10,13 +10,147 @@ use lib $FindBin::Bin;
 use lib $FindBin::Bin . "/../GFFLib";
 use lib $FindBin::Bin . "/../Orthologia";
 
-
 use GD::SVG;
 use Bio::SeqIO;
 use Bio::SeqFeature::Generic;
-use Getopt::Std;
 use GFFLib::GFFFile;
 use Orthologia::Ort;
+use Pod::Usage;
+use Getopt::Long;
+
+
+=head1 NAME
+
+gff2graph_ort_projections_no_contractions.pl - Draws synteny graph
+
+=head1 SYNOPSIS
+
+gff2graph_ort_projections_no_contractions.pl [--RBH | --RBH_CALHOUN | --OMCL ] --orts <file> --chrom_list <file> --gff_list <file> --fasta_list --out <file> [--help]
+
+=head1 OPTIONS
+
+B<--RBH,--RBH_Calhoun,--OMCL > - those flags indicates the format of the orthologous clusters file that will be used when rendering projections. 
+See  a description of each format with --help.
+
+B<--orts> - orthologous clusters file that will be used when rendering projections. See format with --help.
+
+B<--chrom_list> - list of chromosomes or scaffolds to be rendered. See format with --help.
+
+B<--fasta_list> - file listing the path of GFF files (annotation) associated with each genome that will be rendered 
+
+B<--gff_list> - file listing the path of FASTA files (sequence) associated with each genome that will be rendered 
+
+B<--out> - output file in SVG format.
+
+B<--help> - print this message B<(Optional)>
+
+
+=head1 DESCRIPTION
+
+B<* RBH format:>
+  
+ 828547707	prodigal	org1	transcript1	gene1	None	GAPDH
+ 828547707	prodigal	org2	transcript2	gene2	None	GAPDH
+
+
+B<* RBH_Calhoun format:>
+  
+ 828547707	org1	prodigal	transcript1	gene1	None	GAPDH
+ 828547707	org2	prodical	transcript2	gene2	None	GAPDH
+
+
+B<* OMCL format:>  
+
+ ORTHOMCL0(3 genes,2 taxa): G001|gene1(G001) G001|gene2(G001) G002|gene3(G001)
+ ORTHOMCL1(2 genes,1 taxa): G001|gene4(G001) G001|gene5(G001)
+
+
+
+
+
+B<* chrom_list file format:>
+
+ <org name on ort. cluster file>\t<scaffold  or chromosome id>(<start>:<end>)<orientation>\t<scaffold  or chromosome id>(<start>:<end>)<orientation>
+
+ "(start:end)orientation" are optional. There is no need of them if the whole chrom/scaffold needs to be rendered and if it will be rendered 
+ in its current orientation. A start or end equals to -1 indicates to the program to render the chrom/scaffold from its first coordinates (start=-1)
+ till its last coordinate (end=-1). A dash (minus sign) indicates sequences that should be render in the oposite orientation that they are 
+ reported in the GFF and FASTA fiels  
+
+B<Ex.:>
+ org1 chrom1(1:200)- chrom2(-1:400) chrom3
+ org2 chrom1-
+
+ 
+=head1 CONTACT
+
+ Gustavo C. Cerqueira (2015)
+ cerca11@gmail.com
+ gustavo@broadinstitute.org
+=cut
+
+
+
+my ($rbh,$rbh_calhoun,$omcl);
+my $orts_file;
+my $list_chrom;
+my $list_gff;
+my $list_fasta;
+my $outputFile;
+my $help;
+
+GetOptions(	
+			'RBH!' 					=> \$rbh,
+			'RBH_Calhoun!' 			=> \$rbh_calhoun,
+			'OMCL!' 				=> \$omcl,
+			'orts=s' 				=> \$orts_file,
+			'chrom_list=s'			=> \$list_chrom,
+			'gff_list=s'			=> \$list_gff,
+			'fasta_list=s' 			=> \$list_fasta,
+			'out=s'				 	=> \$outputFile,
+			'help!'				 	=> \$help,
+			);
+
+if( defined($help) ){
+   pod2usage(-verbose => 2 ,-exitval => 0);
+} 
+
+my $sum_flags = $rbh + $rbh_calhoun + $omcl; 
+if( (  $sum_flags != 1 ) || ( $sum_flags == 0 ) ){
+	pod2usage( -message => "Error: Please provide a ortho. cluster format !!!!\n\n", -verbose => 1,-exitval => 1, -output => \*STDERR);
+}
+
+if( not defined($orts_file) ){
+   pod2usage( -message => "Error: Parameter --orts is required !!!!\n\n", -verbose => 1,-exitval => 1, -output => \*STDERR);
+} 
+
+if( not defined($list_chrom) ){
+   pod2usage(-message => "Error: Parameter --chrom_list is required !!!!\n\n", -verbose => 1 ,-exitval => 1, -output => \*STDERR);
+} 
+
+if( not defined($list_gff) ){
+   pod2usage(-message=>"Error: Parameter --gff_list is required !!!!\n\n", -verbose => 1 ,-exitval => 1, -output => \*STDERR);
+} 
+
+if( not defined($list_fasta) ){
+   pod2usage(-message=>"Error: Parameter --fasta_list is required !!!!\n\n", -verbose => 1 ,-exitval => 1, -output => \*STDERR);
+} 
+
+if( not defined($outputFile) ){
+   pod2usage(-message=>"Error: Parameter --out is required !!!!\n\n", -verbose => 1 ,-exitval => 1, -output => \*STDERR);
+}
+
+
+my $ort_format;
+
+if( $rbh ){
+	$ort_format = 'RBH'
+}elsif( $rbh_calhoun ){
+	$ort_format = 'RBH_Calhoun'
+}elsif( $omcl ){
+	$ort_format = 'OMCL'
+}
+
 
 my $DEFAULT_WIDTH  = 1000;
 my $DEFAULT_HEIGHT = 600;
@@ -39,7 +173,7 @@ my $CHROM_WIDTH_SPACER_IN_BP = 48000;
 # A. darlingi
 # my $CHROM_WIDTH_SPACER_IN_BP = 12000;
 
-my $debug_projections = 1;
+my $debug_projections = 0;
 my $debug = 0;
 
 STDOUT->autoflush(1);
@@ -61,16 +195,6 @@ my @pallete = (
 # L. loa
 my $gene_color_pallete_index = 2;
 
-my $usage =
-"$0 <orts file> <list chrom/scaffolds> <list gff files> <list fasta files> <svg out>\n";
-
-die $usage if ( scalar(@ARGV) != 5 );
-
-my $orts_file  = $ARGV[0];
-my $list_chrom = $ARGV[1];
-my $list_gff   = $ARGV[2];
-my $list_fasta = $ARGV[3];
-my $outputFile = $ARGV[4];
 
 my $width = $DEFAULT_WIDTH;
 
@@ -174,6 +298,20 @@ while (<LIST_CHROM>) {
 	$cont_species++;
 }
 close(LIST_CHROM);
+
+#################
+# Reading Orts
+print STDERR "Reading orthologous clusters file...\n";
+my $orts = Ort::new( $orts_file, "gene", $ort_format );
+$orts->read();
+
+# Check the organism names in the orts file match those in 
+# the chroms file. No match suggests that the wrong format of orts file was indicated by the user via command parameter
+if ( not orts_match_chroms( $orts, \@species ) ){
+	die "Error: Unable to find in the cluster of othologous file the organisms listed in the chromosome/scaffold file.\n" .
+	"Are you sure that the Orts file is in the $ort_format format?\n";
+} 
+
 
 #map {print $_} @{$chroms[0]};
 #getc();
@@ -318,10 +456,6 @@ for ( my $cont_species = 0 ; $cont_species < scalar(@chroms) ; $cont_species++ )
 	$start_pixel[ $cont_species ] = int( ($overallMaxLength - $sum_chrom_length_arr[ $cont_species ]) / 2 * $pixel_bp_ratio );
 } 
 
-#################
-# Reading Orts
-my $orts = Ort::new( $orts_file, "gene", "RBH" );
-$orts->read();
 
 # create a new image
 my $im = new GD::SVG::Image( $DEFAULT_WIDTH, $DEFAULT_HEIGHT );
@@ -628,3 +762,31 @@ for (
 open OUTPUT, ">" . $outputFile;
 print OUTPUT $im->svg;
 close OUTPUT;
+
+exit(0);
+
+
+sub orts_match_chroms{
+	my ( $orts, $ref_arr_species ) = @_;
+	
+	my @species = @{$ref_arr_species};
+	
+	my $found_all = 1;
+	
+	foreach my $curr_org ( @species ){
+		if (  $orts->get_org_num( $curr_org ) == -1 ){
+			print STDERR "Error: Unable to find org. \'$curr_org\' in the cluster of orthologous file!!\n";
+			$found_all = 0;
+		}
+	}
+	
+	return $found_all;
+}
+	
+	
+	
+	
+	
+	
+
+
