@@ -25,7 +25,7 @@ gff2graph_ort_projections_no_contractions.pl - Draws synteny graph
 
 =head1 SYNOPSIS
 
-gff2graph_ort_projections_no_contractions.pl [--RBH | --RBH_CALHOUN | --OMCL ] --orts <file> --chrom_list <file> --gff_list <file> --fasta_list --out <file> [--help]
+gff2graph_ort_projections_no_contractions.pl [--RBH | --RBH_Calhoun | --OMCL ] --orts <file> --chrom_list <file> --gff_list <file> --fasta_list [ --gene_label <gene feature attribute from GFF file>] --out <file> [--help]
 
 =head1 OPTIONS
 
@@ -39,6 +39,8 @@ B<--chrom_list> - list of chromosomes or scaffolds to be rendered. See format wi
 B<--fasta_list> - file listing the path of GFF files (annotation) associated with each genome that will be rendered 
 
 B<--gff_list> - file listing the path of FASTA files (sequence) associated with each genome that will be rendered 
+
+B<--gene_label> - attribute of the gene feature of the GFF file that should be used as labels for each gene
 
 B<--out> - output file in SVG format.
 
@@ -55,8 +57,8 @@ B<* RBH format:>
 
 B<* RBH_Calhoun format:>
   
- 828547707	org1	prodigal	transcript1	gene1	None	GAPDH
- 828547707	org2	prodical	transcript2	gene2	None	GAPDH
+ 828547707	org1	Ortho	transcript1	gene1	None	GAPDH
+ 828547707	org2	Ortho	transcript2	gene2	None	GAPDH
 
 
 B<* OMCL format:>  
@@ -96,6 +98,7 @@ my $orts_file;
 my $list_chrom;
 my $list_gff;
 my $list_fasta;
+my $gene_label;
 my $outputFile;
 my $help;
 
@@ -107,9 +110,11 @@ GetOptions(
 			'chrom_list=s'			=> \$list_chrom,
 			'gff_list=s'			=> \$list_gff,
 			'fasta_list=s' 			=> \$list_fasta,
+			'gene_label=s'			=> \$gene_label,
 			'out=s'				 	=> \$outputFile,
 			'help!'				 	=> \$help,
 			);
+
 
 if( defined($help) ){
    pod2usage(-verbose => 2 ,-exitval => 0);
@@ -152,13 +157,15 @@ if( $rbh ){
 }
 
 
-my $DEFAULT_WIDTH  = 1000;
+my $DEFAULT_WIDTH  = 8000;
 my $DEFAULT_HEIGHT = 600;
 my $DEFAULT_COLOR  = "white";
 my $MARGIN         = 20;
 
+
+# Vertical constants
 my $CHROM_HEIGHT = 20;
-my $CHROM_SPACER = 200;
+my $CHROM_SPACER = 1600;
 
 # Position of gene caption relative to top left corner of 
 # rectangle representing the gene
@@ -168,7 +175,7 @@ my $TEXT_V_POS_RELATIVE_GENE = -15;
 
 # Space between scaffold/chrom in terms of base pairs
 # L. loa
-my $CHROM_WIDTH_SPACER_IN_BP = 48000;
+my $CHROM_WIDTH_SPACER_IN_BP = 1000;
 
 # A. darlingi
 # my $CHROM_WIDTH_SPACER_IN_BP = 12000;
@@ -533,7 +540,6 @@ for ( my $cont_species = 0 ; $cont_species < scalar(@chroms) ; $cont_species++ )
 
 		my $contig_chrom = $gffGenesRef->{$currGene}->get_chrom();
 		my $id           = $gffGenesRef->{$currGene}->get_id();
-		my $alias        = $gffGenesRef->{$currGene}->get_attribute("alias");
 		my $name         = $gffGenesRef->{$currGene}->get_name();
 		my $gene_start   = $gffGenesRef->{$currGene}->get_start();
 		my $gene_end     = $gffGenesRef->{$currGene}->get_end();
@@ -644,9 +650,12 @@ for ( my $cont_species = 0 ; $cont_species < scalar(@chroms) ; $cont_species++ )
 
 		$im->filledPolygon( $poly, $genes_color );
 		
+		my $label = $id;		
+		$label = $gffGenesRef->{$currGene}->get_attribute($gene_label) if( defined $gene_label );
+		
 		#if( $name =~ "KPC" ){
-			$im->stringUp(gdSmallFont, $rectangle[0] + $TEXT_H_POS_RELATIVE_GENE,
-						$height_offset + $TEXT_V_POS_RELATIVE_GENE , $id ,$black);
+			$im->stringUp(gdSmallFont, int( ( $rectangle[0] + $rectangle[2] ) / 2 ) + $TEXT_H_POS_RELATIVE_GENE,
+						$height_offset + $TEXT_V_POS_RELATIVE_GENE , $label ,$black);
 		#}
 		
 
